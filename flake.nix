@@ -45,6 +45,18 @@
         { system, pkgs }:
         {
           formatting = self.formatter.${system}.check self;
+          actionlint =
+            pkgs.runCommand "json2nix-actionlint"
+              {
+                nativeBuildInputs = [
+                  pkgs.actionlint
+                  pkgs.shellcheck
+                ];
+              }
+              ''
+                actionlint ${./.github/workflows}/*.yaml
+                touch $out
+              '';
           package = self.packages.${system}.default;
           vet = self.packages.${system}.default.overrideAttrs {
             pname = "json2nix-vet";
