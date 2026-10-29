@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"maps"
 	"os"
 	"regexp"
-	"strings"
 	"slices"
+	"strings"
 )
 
 func ToNixNil() string {
@@ -22,11 +24,12 @@ func ToNixBool(b bool) string {
 }
 
 func ToNixNumber(n json.Number) string {
-	re := regexp.MustCompile(`^[^.]*e.*$`)
-	if re.MatchString(n.String()) {
-		return strings.Join(strings.Split(n.String(), "e"), ".e")
+	s := n.String()
+	exponent := strings.IndexAny(s, "eE")
+	if exponent != -1 && !strings.Contains(s[:exponent], ".") {
+		return s[:exponent] + ".0" + s[exponent:]
 	}
-	return n.String()
+	return s
 }
 
 func ToNixString(s string) string {
@@ -53,7 +56,7 @@ func ToNixString(s string) string {
 				sb.WriteString("$")
 			}
 		default:
-			sb.WriteString(fmt.Sprintf("%c", r))
+			sb.WriteByte(r)
 		}
 	}
 	sb.WriteString("\"")
@@ -72,6 +75,9 @@ func ToNixArray(a []interface{}) (string, error) {
 		}
 		if i != 0 {
 			sb.WriteString(" ")
+		}
+		if strings.HasPrefix(nix, "-") {
+			nix = "(" + nix + ")"
 		}
 		sb.WriteString(nix)
 	}
@@ -121,8 +127,8 @@ func ToNixStringMap(m map[string]interface{}) (string, error) {
 	var sb strings.Builder
 
 	sb.WriteString("{")
-	for k, v := range m {
-		nix, err := ToNixAttribute(k, v)
+	for _, k := range slices.Sorted(maps.Keys(m)) {
+		nix, err := ToNixAttribute(k, m[k])
 		if err != nil {
 			return sb.String(), err
 		}
@@ -152,21 +158,29 @@ func ToNix(data interface{}) (string, error) {
 	}
 }
 
-func main() {
-	log.SetFlags(0)
-
-	decoder := json.NewDecoder(os.Stdin)
+func Convert(r io.Reader) (string, error) {
+	decoder := json.NewDecoder(r)
 	decoder.UseNumber()
 
 	var data interface{}
-	err := decoder.Decode(&data)
-	if err != nil {
-		log.Fatalf("Error while decoding JSON: %v", err.Error())
+	if err := decoder.Decode(&data); err != nil {
+		return "", fmt.Errorf("while decoding JSON: %w", err)
 	}
 
 	nix, err := ToNix(data)
 	if err != nil {
-		log.Fatalf("Error while encoding Nix: %v", err.Error())
+		return "", fmt.Errorf("while encoding Nix: %w", err)
+	}
+
+	return nix, nil
+}
+
+func main() {
+	log.SetFlags(0)
+
+	nix, err := Convert(os.Stdin)
+	if err != nil {
+		log.Fatalf("Error %v", err)
 	}
 
 	fmt.Println(nix)
