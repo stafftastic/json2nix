@@ -164,12 +164,12 @@ func Convert(r io.Reader) (string, error) {
 
 	var data interface{}
 	if err := decoder.Decode(&data); err != nil {
-		return "", fmt.Errorf("Error while decoding JSON: %w", err)
+		return "", fmt.Errorf("while decoding JSON: %w", err)
 	}
 
 	nix, err := ToNix(data)
 	if err != nil {
-		return "", fmt.Errorf("Error while encoding Nix: %w", err)
+		return "", fmt.Errorf("while encoding Nix: %w", err)
 	}
 
 	return nix, nil
@@ -180,7 +180,7 @@ func main() {
 
 	nix, err := Convert(os.Stdin)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error %v", err)
 	}
 
 	fmt.Println(nix)
