@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
 	"slices"
+	"strings"
 )
 
 func ToNixNil() string {
