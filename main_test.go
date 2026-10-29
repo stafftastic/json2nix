@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"os"
 	"path/filepath"
@@ -22,13 +23,12 @@ func TestGolden(t *testing.T) {
 	for _, input := range inputs {
 		name := strings.TrimSuffix(filepath.Base(input), ".json")
 		t.Run(name, func(t *testing.T) {
-			file, err := os.Open(input)
+			data, err := os.ReadFile(input)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer file.Close()
 
-			got, err := Convert(file)
+			got, err := Convert(bytes.NewReader(data))
 			if err != nil {
 				t.Fatal(err)
 			}
