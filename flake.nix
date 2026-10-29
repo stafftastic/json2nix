@@ -23,6 +23,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               go
+              golangci-lint
             ];
           };
         }
@@ -37,6 +38,7 @@
             src = ./.;
             vendorHash = null;
             env.CGO_ENABLED = "0";
+            doCheck = false;
           };
         }
       );
@@ -57,11 +59,46 @@
                 actionlint ${./.github/workflows}/*.yaml
                 touch $out
               '';
-          package = self.packages.${system}.default;
+          ci-coverage =
+            pkgs.runCommand "json2nix-ci-coverage"
+              {
+                checks = lib.concatLines (lib.attrNames self.checks.x86_64-linux);
+                passAsFile = [ "checks" ];
+              }
+              ''
+                grep -ohE '\.#checks\.x86_64-linux\.[A-Za-z0-9_-]+' ${./.github/workflows}/*.yaml \
+                  | sed 's/^\.#checks\.x86_64-linux\.//' | sort -u > built
+                sort -u "$checksPath" > declared
+                missing=$(comm -23 declared built)
+                if [ -n "$missing" ]; then
+                  echo "checks not built by any pull request job:" $missing
+                  exit 1
+                fi
+                touch $out
+              '';
           vet = self.packages.${system}.default.overrideAttrs {
             pname = "json2nix-vet";
             buildPhase = "go vet ./...";
-            doCheck = false;
+            installPhase = "touch $out";
+          };
+          golangci-lint = self.packages.${system}.default.overrideAttrs (previousAttrs: {
+            pname = "json2nix-golangci-lint";
+            nativeBuildInputs = previousAttrs.nativeBuildInputs ++ [ pkgs.golangci-lint ];
+            buildPhase = ''
+              export HOME=$TMPDIR
+              golangci-lint run ./...
+            '';
+            installPhase = "touch $out";
+          });
+          typecheck = self.packages.${system}.default.overrideAttrs {
+            pname = "json2nix-typecheck";
+            buildPhase = "go test -count=1 -run '^$' ./...";
+            installPhase = "touch $out";
+          };
+          package = self.packages.${system}.default;
+          test = self.packages.${system}.default.overrideAttrs {
+            pname = "json2nix-test";
+            buildPhase = "go test -count=1 ./...";
             installPhase = "touch $out";
           };
           roundtrip =

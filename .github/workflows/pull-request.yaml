@@ -27,7 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: cachix/install-nix-action@v31.11.3
-      - run: nix build -L .#checks.x86_64-linux.vet .#checks.x86_64-linux.actionlint
+      - run: >-
+          nix build -L
+          .#checks.x86_64-linux.vet
+          .#checks.x86_64-linux.golangci-lint
+          .#checks.x86_64-linux.actionlint
+          .#checks.x86_64-linux.ci-coverage
 
   test:
     name: test
@@ -36,4 +41,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: cachix/install-nix-action@v31.11.3
-      - run: nix build -L .#checks.x86_64-linux.package .#checks.x86_64-linux.roundtrip
+      - run: nix build -L .#checks.x86_64-linux.test .#checks.x86_64-linux.roundtrip
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v31.11.3
+      - run: nix build -L .#checks.x86_64-linux.typecheck
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v31.11.3
+      - run: nix build -L .#checks.x86_64-linux.package
