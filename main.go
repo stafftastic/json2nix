@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"maps"
 	"os"
@@ -157,21 +158,29 @@ func ToNix(data interface{}) (string, error) {
 	}
 }
 
-func main() {
-	log.SetFlags(0)
-
-	decoder := json.NewDecoder(os.Stdin)
+func Convert(r io.Reader) (string, error) {
+	decoder := json.NewDecoder(r)
 	decoder.UseNumber()
 
 	var data interface{}
-	err := decoder.Decode(&data)
-	if err != nil {
-		log.Fatalf("Error while decoding JSON: %v", err.Error())
+	if err := decoder.Decode(&data); err != nil {
+		return "", fmt.Errorf("Error while decoding JSON: %w", err)
 	}
 
 	nix, err := ToNix(data)
 	if err != nil {
-		log.Fatalf("Error while encoding Nix: %v", err.Error())
+		return "", fmt.Errorf("Error while encoding Nix: %w", err)
+	}
+
+	return nix, nil
+}
+
+func main() {
+	log.SetFlags(0)
+
+	nix, err := Convert(os.Stdin)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	fmt.Println(nix)

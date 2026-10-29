@@ -1,0 +1,1 @@
+{""=11;"'starts-with-prime"=8;"-starts-with-dash"=7;"9starts-with-digit"=6;CamelCase9=5;_under_score=2;"assert"=13;dash-ed=3;"else"=14;"has space"=9;"has.dot"=10;"if"=15;"in"=16;"inherit"=17;"let"=18;null=24;"or"=19;plain=1;prime'=4;"rec"=20;"then"=21;true=23;"with"=22;"ümlaut"=12;}
