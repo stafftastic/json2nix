@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: cachix/install-nix-action@v31.11.3
       - run: >-
-          nix build -L
+          nix build -L --keep-going
           .#checks.x86_64-linux.vet
           .#checks.x86_64-linux.golangci-lint
           .#checks.x86_64-linux.actionlint
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: cachix/install-nix-action@v31.11.3
-      - run: nix build -L .#checks.x86_64-linux.test .#checks.x86_64-linux.roundtrip
+      - run: nix build -L --keep-going .#checks.x86_64-linux.test .#checks.x86_64-linux.roundtrip
 
   typecheck:
     name: typecheck
