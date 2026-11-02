@@ -66,7 +66,7 @@
                 passAsFile = [ "checks" ];
               }
               ''
-                grep -ohE '\.#checks\.x86_64-linux\.[A-Za-z0-9_-]+' ${./.github/workflows}/*.yaml \
+                grep -ohE '\.#checks\.x86_64-linux\.[A-Za-z0-9_-]+' ${./.github/workflows/pull-request.yaml} \
                   | sed 's/^\.#checks\.x86_64-linux\.//' | sort -u > built
                 sort -u "$checksPath" > declared
                 missing=$(comm -23 declared built)
