@@ -10,6 +10,10 @@ concurrency:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
 jobs:
   lint:
     name: lint
@@ -17,6 +21,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.3
       - run: >-
           nix build -L --keep-going
@@ -33,6 +39,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.3
       - run: nix build -L .#checks.x86_64-linux.formatting
 
@@ -42,6 +50,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.3
       - run: nix build -L .#checks.x86_64-linux.typecheck
 
@@ -51,6 +61,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.3
       - run: >-
           nix build -L --keep-going
@@ -63,5 +75,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.3
       - run: nix build -L .#checks.x86_64-linux.package
