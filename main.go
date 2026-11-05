@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
 	"slices"
+	"strings"
 )
 
 func ToNixNil() string {
@@ -53,7 +53,7 @@ func ToNixString(s string) string {
 				sb.WriteString("$")
 			}
 		default:
-			sb.WriteString(fmt.Sprintf("%c", r))
+			sb.WriteByte(r)
 		}
 	}
 	sb.WriteString("\"")
