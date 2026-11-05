@@ -1,0 +1,1 @@
+{attribute={exponent=6.0e2;negative=-7;};exponents=[1.0e5 1.0E5 1.0e+5 1.0e-5 0.0e0 (-2.0e3) (-3.0E-2)];floats=[0.5 1.25 (-0.5) 10.0];fraction-exponents=[1.5e3 1.5E+3 (-2.5e-3)];integers=[0 1 42 (-1) (-42)];}

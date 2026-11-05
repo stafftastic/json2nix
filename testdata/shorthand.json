@@ -1,0 +1,8 @@
+{
+  "a": { "b": { "c": "chain" } },
+  "multi": { "x": 1, "y": 2 },
+  "ends": { "in": { "multi": { "x": 1, "y": 2 } } },
+  "empty": { "set": {} },
+  "list": { "value": [{ "nested": { "single": true } }] },
+  "quoted key": { "if": { "0": null } }
+}

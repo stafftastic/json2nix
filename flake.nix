@@ -75,6 +75,68 @@
                 deadnix --fail .
                 touch $out
               '';
+          actionlint =
+            pkgs.runCommandLocal "actionlint"
+              {
+                nativeBuildInputs = with pkgs; [
+                  actionlint
+                  shellcheck
+                ];
+              }
+              ''
+                actionlint ${./.github/workflows}/*.yaml
+                touch $out
+              '';
+          action-pins = pkgs.runCommandLocal "action-pins" { } ''
+            unpinned=$(find ${./.github/workflows} -name '*.y*ml' -exec grep -nHE '^[[:space:]-]*uses:' {} + \
+              | grep -vE '^[^:]+:[0-9]+:[[:space:]-]*uses:[[:space:]]+\./[^[:space:]]*[[:space:]]*$' \
+              | grep -vE '^[^:]+:[0-9]+:[[:space:]-]*uses:[[:space:]]+[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40} # [^[:space:]]+[[:space:]]*$' \
+              | grep -vE '^[^:]+:[0-9]+:[[:space:]-]*uses:[[:space:]]+docker://[^[:space:]@#]+@sha256:[0-9a-f]{64}[[:space:]]*$' || true)
+            if [ -n "$unpinned" ]; then
+              echo "pin these as <action>@<commit> # <tag> (docker:// as @sha256:<digest>):"
+              echo "$unpinned"
+              exit 1
+            fi
+            touch $out
+          '';
+          ci-coverage =
+            pkgs.runCommandLocal "ci-coverage"
+              {
+                checks = lib.concatLines (lib.attrNames self.checks.x86_64-linux);
+                passAsFile = [ "checks" ];
+              }
+              ''
+                grep -ohE '\.#checks\.x86_64-linux\.[A-Za-z0-9_-]+' ${./.github/workflows/pull-request.yaml} \
+                  | sed 's/^\.#checks\.x86_64-linux\.//' | sort -u > built
+                sort -u "$checksPath" > declared
+                missing=$(comm -23 declared built)
+                if [ -n "$missing" ]; then
+                  echo "checks not built by any pull request job:" $missing
+                  exit 1
+                fi
+                touch $out
+              '';
+          roundtrip =
+            pkgs.runCommandLocal "roundtrip"
+              {
+                nativeBuildInputs = [
+                  self.packages.${system}.default
+                  pkgs.jq
+                  pkgs.nix
+                ];
+              }
+              ''
+                export NIX_STATE_DIR=$TMPDIR/nix-state NIX_LOG_DIR=$TMPDIR/nix-log
+                for input in ${./testdata}/*.json; do
+                  json2nix < "$input" > output.nix
+                  nix-instantiate --parse output.nix > /dev/null
+                  diff \
+                    <(jq --sort-keys 'walk(if type == "number" then . + 0 else . end)' "$input") \
+                    <(nix-instantiate --eval --strict --json output.nix \
+                      | jq --sort-keys 'walk(if type == "number" then . + 0 else . end)')
+                done
+                touch $out
+              '';
           vet = self.packages.${system}.default.overrideAttrs (previousAttrs: {
             pname = "${previousAttrs.pname}-vet";
             buildPhase = "go vet ./...";
@@ -103,6 +165,7 @@
               nixfmt = {
                 command = lib.getExe pkgs.nixfmt;
                 includes = [ "*.nix" ];
+                excludes = [ "testdata/*.nix" ];
               };
               oxfmt = {
                 command = lib.getExe pkgs.oxfmt;
